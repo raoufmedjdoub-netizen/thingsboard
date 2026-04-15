@@ -1,0 +1,91 @@
+#
+# ThingsBoard CE - Monolithic deployment for Dokploy + Traefik
+# Topology: 1x tb-node + 1x PostgreSQL
+# Queue: in-memory | Cache: Caffeine | JS: local (GraalJS)
+# Backups: handled by Dokploy
+#
+
+services:
+
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - tb-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - tb-internal
+
+  tb:
+    # Pin recommended in production, e.g. thingsboard/tb-node:4.3.0
+    image: thingsboard/tb-node:latest
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    environment:
+      # --- Deployment type ---
+      TB_SERVICE_TYPE: monolith
+      TB_QUEUE_TYPE: in-memory
+
+      # --- Database (PostgreSQL) ---
+      SPRING_DRIVER_CLASS_NAME: org.postgresql.Driver
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+
+      # --- First-run DB install/bootstrap ---
+      # Set INSTALL_TB=true ONLY on very first start, then revert to false.
+      # LOAD_DEMO=true loads demo data (set false in production).
+      INSTALL_TB: ${INSTALL_TB:-false}
+      LOAD_DEMO: ${LOAD_DEMO:-false}
+
+      # --- JS execution (in-process, no tb-js-executor needed) ---
+      JS_EVALUATOR: local
+
+      # --- HTTP port (internal, Traefik routes to it) ---
+      HTTP_BIND_PORT: 8080
+
+      # --- JVM ---
+      JAVA_OPTS: ${JAVA_OPTS:--Xms2g -Xmx4g}
+
+    volumes:
+      - tb-data:/data
+      - tb-logs:/var/log/thingsboard
+
+    networks:
+      - tb-internal
+      - dokploy-network
+      - chirpstack-net
+
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=dokploy-network"
+      # HTTP router (Dokploy/Traefik usually handles HTTPS + cert automatically)
+      - "traefik.http.routers.thingsboard.rule=Host(`${TB_DOMAIN}`)"
+      - "traefik.http.routers.thingsboard.entrypoints=websecure"
+      - "traefik.http.routers.thingsboard.tls.certresolver=letsencrypt"
+      - "traefik.http.services.thingsboard.loadbalancer.server.port=8080"
+      # WebSocket passthrough for live telemetry
+      - "traefik.http.routers.thingsboard.service=thingsboard"
+
+volumes:
+  tb-postgres-data:
+  tb-data:
+  tb-logs:
+
+networks:
+  tb-internal:
+    driver: bridge
+  dokploy-network:
+    external: true
+  chirpstack-net:
+    external: true
+    name: chirpstack-server-chirpstack-r4wjat
