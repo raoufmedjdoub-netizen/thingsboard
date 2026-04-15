@@ -7,7 +7,7 @@
 
 services:
 
-  postgres:
+  tb-postgres:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
@@ -29,7 +29,7 @@ services:
     image: thingsboard/tb-node:latest
     restart: unless-stopped
     depends_on:
-      - postgres
+      - tb-postgres
     environment:
       # --- Deployment type ---
       TB_SERVICE_TYPE: monolith
@@ -37,7 +37,7 @@ services:
 
       # --- Database (PostgreSQL) ---
       SPRING_DRIVER_CLASS_NAME: org.postgresql.Driver
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://tb-postgres:5432/${POSTGRES_DB}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
 
