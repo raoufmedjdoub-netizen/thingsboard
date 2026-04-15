@@ -304,9 +304,6 @@ services:
      - ./haproxy/letsencrypt:/etc/letsencrypt
      - ./haproxy/certs.d:/usr/local/etc/haproxy/certs.d
     ports:
-     - "80:80"
-     - "443:443"
-     - "1883:1883"
      - "7070:7070"
      - "9999:9999"
     cap_add:
