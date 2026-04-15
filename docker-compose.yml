@@ -65,16 +65,9 @@ services:
       - dokploy-network
       - chirpstack-net
 
-    labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=dokploy-network"
-      # HTTP router (Dokploy/Traefik usually handles HTTPS + cert automatically)
-      - "traefik.http.routers.thingsboard.rule=Host(`${TB_DOMAIN}`)"
-      - "traefik.http.routers.thingsboard.entrypoints=websecure"
-      - "traefik.http.routers.thingsboard.tls.certresolver=letsencrypt"
-      - "traefik.http.services.thingsboard.loadbalancer.server.port=8080"
-      # WebSocket passthrough for live telemetry
-      - "traefik.http.routers.thingsboard.service=thingsboard"
+    # Domain + TLS are configured in Dokploy UI (Domains tab).
+    # Dokploy injects the Traefik labels automatically.
+    # Target service port to declare in Dokploy: 8080
 
 volumes:
   tb-postgres-data:
