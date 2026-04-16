@@ -25,8 +25,9 @@ services:
       - tb-internal
 
   tb:
-    # Pin recommended in production, e.g. thingsboard/tb-node:4.3.0
-    image: thingsboard/tb-node:latest
+    build:
+      context: .
+      dockerfile: Dockerfile.mboard
     restart: unless-stopped
     depends_on:
       - tb-postgres
