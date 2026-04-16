@@ -1,5 +1,7 @@
 FROM node:20-alpine AS ui-builder
 
+RUN apk add --no-cache git
+
 WORKDIR /ui-ngx
 
 COPY ui-ngx/package.json ui-ngx/package-lock.json* ui-ngx/yarn.lock* ./
