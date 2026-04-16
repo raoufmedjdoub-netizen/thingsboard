@@ -54,6 +54,9 @@ services:
       # --- HTTP port (internal, Traefik routes to it) ---
       HTTP_BIND_PORT: 8080
 
+      # --- Custom UI (MBoard branding) ---
+      SPRING_WEB_RESOURCES_STATIC_LOCATIONS: "file:/usr/share/thingsboard/ui/,classpath:/public/"
+
       # --- JVM ---
       JAVA_OPTS: ${JAVA_OPTS:--Xms2g -Xmx4g}
 
