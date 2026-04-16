@@ -1,10 +1,3 @@
-**/node_modules
-**/target
-**/.git
-**/.idea
-**/.vscode
-**/build
-**/packaging
-**/docker
-!ui-ngx/
+*
+!ui-build/
 !Dockerfile.mboard
